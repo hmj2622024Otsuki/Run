@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="ソース.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Run.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
