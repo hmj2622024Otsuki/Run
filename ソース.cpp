@@ -36,6 +36,7 @@ int APIENTRY WinMain(
 	SetDrawScreen(DX_SCREEN_BACK); // 描画面を裏画面にする
 
 	int score = 0;
+	int HighScore = 101000;
 	int timer = 0;
 	int setSpeed = 8;
 	int scene = TITLE;
@@ -51,6 +52,7 @@ int APIENTRY WinMain(
 	};
 	int imgPlayerJump = LoadGraphWithCheck("image/jump.png"); // プレイヤーのジャンプ画像を読み込む
 	int imgPlayerOver = LoadGraphWithCheck("image/over.png"); // プレイヤーのゲームオーバー時の画像を読み込む
+	int imgPlayerJumpOver = LoadGraphWithCheck("image/over2.png"); // プレイヤーのゲームオーバー時の画像を読み込む(2)
 
 	// 背景画像を読み込む
 	int imgBG = LoadGraphWithCheck("image/bg.png");
@@ -68,7 +70,11 @@ int APIENTRY WinMain(
 
 	// 効果音・BGMの用意
 	int jumpSE = LoadSoundMemWithCheck("sound/jump.mp3"); // ジャンプの効果音を読み込む
-	int overSE = LoadSoundMemWithCheck("sound/over3.mp3"); // ゲームオーバー時の効果音を読み込む
+	int overSE = LoadSoundMemWithCheck("sound/over.mp3"); // ゲームオーバー時の効果音を読み込む
+	int decideSE = LoadSoundMemWithCheck("sound/decide.mp3"); // 決定時の効果音を読み込む
+	int backSE = LoadSoundMemWithCheck("sound/back.mp3"); // タイトルシーン遷移時の効果音を読み込む
+	int runSE = LoadSoundMemWithCheck("sound/run.mp3"); // ゲーム開始時の走る効果音を読み込む
+	int windSE = LoadSoundMemWithCheck("sound/wind.mp3"); // 風の効果音を読み込む
 
 	// プレイヤーの座標用の変数
 	float playerX = 200, playerY = 400;
@@ -91,7 +97,7 @@ int APIENTRY WinMain(
 		}
 		else
 		{
-			bgX = (bgX - spd * 2) % WIDTH;
+			bgX = (bgX - spd * 1) % WIDTH;
 		}
 		DrawGraph(bgX + WIDTH, 0, imgBG, false); // 背景の表示
 		DrawGraph(bgX, 0, imgBG, false); //
@@ -113,27 +119,33 @@ int APIENTRY WinMain(
 		// プレイヤー
 		if (jump == true)
 		{
-			DrawGraph(playerX, playerY, imgPlayerJump, true); // ジャンプの時に画像をり替え
+			DrawGraph(playerX, playerY, imgPlayerJump, true); // ジャンプの時の画像に切り替え
+			if (scene == OVER)
+			{
+				DrawGraph(playerX, playerY, imgPlayerJumpOver, true);
+			}
 		}
 		else if (scene == OVER)
 		{
-			DrawGraph(playerX, playerY, imgPlayerOver, true); // プレイヤの表示
+			DrawGraph(playerX, playerY, imgPlayerOver, true); // ゲームオーバー時の画像に切り替え
 		}
 		else
 		{
 			DrawGraph(playerX, playerY, imgPlayer[(timer / 3) % 4], true); // プレイヤの表示
 		}
 
-		// 時間のカウント
-		timer++;
-		SetFontSize(18);
-		DrawFormatString(0, 0, BLACK, "%d", timer);
-
-		// マウス座標(仮)
+		// 【仮】時間のカウント、マウス座標など諸々の情報表示。不要になったらコメントアウトする
 		int mouseX, mouseY;
 		GetMousePoint(&mouseX, &mouseY);
 		SetFontSize(18);
-		DrawFormatString(820, 0, BLACK, "(%d, %d)", mouseX, mouseY);
+		DrawFormatString(0, 0, BLACK, "(%d, %d)", mouseX, mouseY);
+
+		timer++;
+		SetFontSize(18);
+		DrawFormatString(0, 20, BLACK, "%d", timer);
+
+		SetFontSize(18);
+		DrawFormatString(0, 40, BLACK, "Enemy_Speed:%d", setSpeed);
 
 		// 当たり判定
 		int x1 = playerX + 24, y1 = playerY + 40, r1 = 18, col1 = GetColor(255, 0, 0);
@@ -155,11 +167,28 @@ int APIENTRY WinMain(
 				enemyY = 400;
 				setSpeed = 8;
 				score = 0;
+				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
+				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
 			}
 			break;
 
 
 		case(PLAY): // ゲームプレイ画面の処理
+
+			// スコアの表示
+			SetFontSize(30);
+			DrawFormatString(700, 0, BLACK, "スコア：%d", score);
+
+			// ハイスコアの表示
+			if (score > HighScore)
+			{
+				HighScore = score; // ハイスコアを超えた時の処理
+				DrawTextB(747, 60, "ハイスコア：%d", HighScore, 0xffff00, 30);
+			}
+			else
+			{
+				DrawTextB(747, 60, "ハイスコア：%d", HighScore, 0xffffff, 30);
+			}
 
 			// ジャンプの処理
 			if (CheckHitKey(KEY_INPUT_SPACE) == 1 && !jump)
@@ -186,12 +215,15 @@ int APIENTRY WinMain(
 			enemyX = enemyX - spd * setSpeed;
 			if (enemyX < 0 - 100)
 			{
-				setSpeed = GetRand(16) + 8;
+				setSpeed = GetRand(27) + 8;
 				enemyX = 980;
+
+				if (setSpeed >= 28)
+					PlaySoundMem(windSE, DX_PLAYTYPE_BACK);
 			}
 			DrawGraph(enemyX, enemyY, imgEnemy1[(timer / 3) % 3], true);
 
-			// スコアとか(次回修正予定)
+			// プレイヤーと敵が通過したことによるスコアの加算
 			if (playerX >= enemyX)
 			{
 				if (addScore == 0)
@@ -204,9 +236,6 @@ int APIENTRY WinMain(
 					addScore = 0;
 				}
 			}
-
-			SetFontSize(30);
-			DrawFormatString(770, 0, BLACK, "スコア：%d", score);
 
 			// 当たり判定の描画
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 0);
@@ -226,6 +255,34 @@ int APIENTRY WinMain(
 
 		case(OVER): // ゲームオーバー画面の処理
 			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3 - 80, "ゲームオーバー", 0xff0000, 80);
+
+			// スコア別ランク付け
+			if (score <= 3000)
+			{
+				DrawTextA(WIDTH * 0.5 + 290, HEIGHT / 2 - 120, "スコア：%d　出直してこい", score, 0x000000, 30);
+			}
+			else if (score <= 10000)
+			{
+				DrawTextA(WIDTH * 0.5 + 220, HEIGHT / 2 - 120, "スコア：%d　もずく級", score, 0x000000, 30);
+			}
+			else if (score <= 30000)
+			{
+				DrawTextA(WIDTH * 0.5 + 250, HEIGHT / 2 - 120, "スコア：%d　三色団子級", score, 0x000000, 30);
+			}
+			else if (score <= 50000)
+			{
+				DrawTextA(WIDTH * 0.5 + 200, HEIGHT / 2 - 120, "スコア：%d　徒桜級", score, 0x000000, 30);
+			}
+			else if (score <= 100000)
+			{
+				DrawTextA(WIDTH * 0.5 + 200, HEIGHT / 2 - 120, "スコア：%d　落雁級", score, 0x000000, 30);
+			}
+			else if (score >= 100000)
+			{
+				DrawTextA(WIDTH * 0.5 + 250, HEIGHT / 2 - 120, "スコア：%d　一望無限級", score, 0x000000, 30);
+			}
+
+
 			DrawTextC(WIDTH * 0.5, HEIGHT / 2, "Tキーでタイトルに戻る", 0xffffff, 30);
 			DrawTextC(WIDTH * 0.5, HEIGHT / 2 + 45, "Rキーでもう一度やり直す", 0xffffff, 30);
 
@@ -237,8 +294,8 @@ int APIENTRY WinMain(
 			// Tキーが押されたらタイトルシーンへ遷移する
 			if (CheckHitKey(KEY_INPUT_T) == 1)
 			{
-				// ここで値を初期化
 				scene = TITLE;
+				PlaySoundMem(backSE, DX_PLAYTYPE_BACK);
 			}
 			// Rキーが押されたらゲームシーンへ遷移する
 			else if (CheckHitKey(KEY_INPUT_R) == 1)
@@ -249,6 +306,8 @@ int APIENTRY WinMain(
 				enemyY = 400;
 				setSpeed = 8;
 				score = 0;
+				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
+				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
 			}
 			break;
 		}
@@ -281,15 +340,28 @@ int LoadSoundMemWithCheck(const char* file)
 	return res;
 }
 
-// 影をつけた文字列と値を表示する関数
-void DrawText(int x, int y, const char* txt, int val, int col, int siz)
+// 文字列と値をセンタリングして表示する関数
+void DrawTextA(int x, int y, const char* txt, int val, int col, int siz)
 {
+	int strWidth = GetDrawStringWidth(txt, strlen(txt));
+	x -= strWidth / 2;
+	y -= siz / 2;
+	SetFontSize(siz);
+	DrawFormatString(x, y, col, txt, val);
+}
+
+// 影をつけた文字列と値をセンタリングして表示する関数
+void DrawTextB(int x, int y, const char* txt, int val, int col, int siz)
+{
+	int strWidth = GetDrawStringWidth(txt, strlen(txt));
+	x -= strWidth / 2;
+	y -= siz / 2;
 	SetFontSize(siz);
 	DrawFormatString(x + 1, y + 1, 0x000000, txt, val);
 	DrawFormatString(x, y, col, txt, val);
 }
 
-// 文字列をセンタリングして表示する関数
+// 影をつけた文字列をセンタリングして表示する関数
 void DrawTextC(int x, int y, const char* txt, int col, int siz)
 {
 	SetFontSize(siz);

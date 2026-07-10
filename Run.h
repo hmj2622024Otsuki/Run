@@ -18,5 +18,6 @@ struct OBJECT
 
 int LoadGraphWithCheck(const char* file);
 int LoadSoundMemWithCheck(const char* file);
-void DrawText(int x, int y, const char* txt, int val, int col, int siz);
+void DrawTextA(int x, int y, const char* txt, int val, int col, int siz);
+void DrawTextB(int x, int y, const char* txt, int val, int col, int siz);
 void DrawTextC(int x, int y, const char* txt, int col, int siz);
