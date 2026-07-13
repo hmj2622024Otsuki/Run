@@ -40,41 +40,40 @@ int APIENTRY WinMain(
 	int timer = 0;
 	int setSpeed = 8;
 	int scene = TITLE;
+	int scrollSpeed = 24;
 
 	// 画像の用意
 
-	// プレイヤーの画像を読み込む
+	// プレイヤーの画像
 	int imgPlayer[4] = {
 		LoadGraphWithCheck("image/run01.png"),
 		LoadGraphWithCheck("image/run02.png"),
 		LoadGraphWithCheck("image/run03.png"),
 		LoadGraphWithCheck("image/run04.png")
 	};
-	int imgPlayerJump = LoadGraphWithCheck("image/jump.png"); // プレイヤーのジャンプ画像を読み込む
-	int imgPlayerOver = LoadGraphWithCheck("image/over.png"); // プレイヤーのゲームオーバー時の画像を読み込む
-	int imgPlayerJumpOver = LoadGraphWithCheck("image/over2.png"); // プレイヤーのゲームオーバー時の画像を読み込む(2)
+	int imgPlayerJump = LoadGraphWithCheck("image/jump.png"); // プレイヤーのジャンプ画像
+	int imgPlayerOver = LoadGraphWithCheck("image/over.png"); // プレイヤーのゲームオーバー時の画像
+	int imgPlayerJumpOver = LoadGraphWithCheck("image/over2.png"); // プレイヤーのゲームオーバー時の画像(2)
 
-	// 背景画像を読み込む
-	int imgBG = LoadGraphWithCheck("image/bg.png");
+	int imgBG = LoadGraphWithCheck("image/bg.png"); // 背景画像を読み込む
 	int imgGround = LoadGraphWithCheck("image/ground.png"); // 地面の画像を読み込む
+	int imgGreen = LoadGraphWithCheck("image/green.png"); // 木々の画像を読み込む
 
-	// (仮)弾の画像を読み込む
-	int imgBullet = LoadGraphWithCheck("image/bullet.png");
-
-	// 敵の画像を読み込む
-	int imgEnemy1[4] = {
+	// 敵の画像
+	int imgEnemy1[3] = {
 		LoadGraphWithCheck("image/enemy01.png"),
 		LoadGraphWithCheck("image/enemy02.png"),
 		LoadGraphWithCheck("image/enemy03.png")
 	};
 
-	// 効果音・BGMの用意
-	int jumpSE = LoadSoundMemWithCheck("sound/jump.mp3"); // ジャンプの効果音を読み込む
-	int overSE = LoadSoundMemWithCheck("sound/over.mp3"); // ゲームオーバー時の効果音を読み込む
-	int decideSE = LoadSoundMemWithCheck("sound/decide.mp3"); // 決定時の効果音を読み込む
-	int backSE = LoadSoundMemWithCheck("sound/back.mp3"); // タイトルシーン遷移時の効果音を読み込む
-	int runSE = LoadSoundMemWithCheck("sound/run.mp3"); // ゲーム開始時の走る効果音を読み込む
-	int windSE = LoadSoundMemWithCheck("sound/wind.mp3"); // 風の効果音を読み込む
+	// 効果音・BGMを読み込む
+	int bgm = LoadSoundMemWithCheck("sound/bgm.mp3"); // BGM
+	int jumpSE = LoadSoundMemWithCheck("sound/jump.mp3"); // ジャンプの効果音
+	int overSE = LoadSoundMemWithCheck("sound/over.mp3"); // ゲームオーバー時の効果音
+	int decideSE = LoadSoundMemWithCheck("sound/decide.mp3"); // 決定時の効果音
+	int backSE = LoadSoundMemWithCheck("sound/back.mp3"); // タイトルシーン遷移時の効果音
+	int runSE = LoadSoundMemWithCheck("sound/run.mp3"); // ゲーム開始時の走る効果音
+	int windSE = LoadSoundMemWithCheck("sound/wind.mp3"); // 風の効果音
 
 	// プレイヤーの座標用の変数
 	float playerX = 200, playerY = 400;
@@ -102,6 +101,22 @@ int APIENTRY WinMain(
 		DrawGraph(bgX + WIDTH, 0, imgBG, false); // 背景の表示
 		DrawGraph(bgX, 0, imgBG, false); //
 
+		// 木々
+		static int greenX;
+
+		if (scene == OVER)
+		{
+			greenX = (greenX) % WIDTH;
+		}
+		else
+		{
+			greenX = (greenX - spd * 2) % WIDTH;
+		}
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		DrawGraph(greenX + WIDTH, 0, imgGreen, true); // 木々の表示
+		DrawGraph(greenX, 0, imgGreen, true); //
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
 		// 地面
 		static int groundX;
 
@@ -116,7 +131,7 @@ int APIENTRY WinMain(
 		DrawGraph(groundX + WIDTH, 0, imgGround, true); // 地面の表示
 		DrawGraph(groundX, 0, imgGround, true); //
 
-		// プレイヤー
+		// プレイヤーの画像関連
 		if (jump == true)
 		{
 			DrawGraph(playerX, playerY, imgPlayerJump, true); // ジャンプの時の画像に切り替え
@@ -147,6 +162,9 @@ int APIENTRY WinMain(
 		SetFontSize(18);
 		DrawFormatString(0, 40, BLACK, "Enemy_Speed:%d", setSpeed);
 
+		SetFontSize(18);
+		DrawFormatString(0, 60, BLACK, "Scene:%d", scene);
+
 		// 当たり判定
 		int x1 = playerX + 24, y1 = playerY + 40, r1 = 18, col1 = GetColor(255, 0, 0);
 		int x2 = enemyX + 22, y2 = enemyY + 40, r2 = 28, col2 = GetColor(0, 0, 255);
@@ -157,8 +175,14 @@ int APIENTRY WinMain(
 		{
 
 		case(TITLE): // タイトル画面の処理
-			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3, "きぃちゃん、怪物なんか\n     怖くないもん", 0xff6600, 68);
-			DrawTextC(WIDTH * 0.5, HEIGHT / 2 + 200, "Press R Key to start", 0xffffff, 60);
+
+			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3, "Run Game", 0xff6600, 80);
+
+			if (timer % 50 < 25)
+			{
+				DrawTextC(WIDTH * 0.5, HEIGHT / 2 + 200, "Rキーを押してスタート", 0xffffff, 60);
+			}
+
 			if (CheckHitKey(KEY_INPUT_R) == 1)
 			{
 				// ここで値を初期化
@@ -169,9 +193,11 @@ int APIENTRY WinMain(
 				score = 0;
 				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
 				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
+
+				PlaySoundMem(bgm, DX_PLAYTYPE_LOOP); // BGM再生開始(ループ)
+				ChangeVolumeSoundMem(255, bgm);
 			}
 			break;
-
 
 		case(PLAY): // ゲームプレイ画面の処理
 
@@ -219,7 +245,9 @@ int APIENTRY WinMain(
 				enemyX = 980;
 
 				if (setSpeed >= 28)
+				{
 					PlaySoundMem(windSE, DX_PLAYTYPE_BACK);
+				}
 			}
 			DrawGraph(enemyX, enemyY, imgEnemy1[(timer / 3) % 3], true);
 
@@ -237,6 +265,51 @@ int APIENTRY WinMain(
 				}
 			}
 
+			if (score <= 10000)
+			{
+				scrollSpeed = 24;
+			}
+			else if (score <= 20000)
+			{
+				scrollSpeed = 23;
+			}
+			else if (score <= 30000)
+			{
+				scrollSpeed = 22;
+			}
+			else if (score <= 40000)
+			{
+				scrollSpeed = 21;
+			}
+			else if (score <= 50000)
+			{
+				scrollSpeed = 20;
+			}
+			else if (score <= 60000)
+			{
+				scrollSpeed = 18;
+			}
+			else if (score <= 70000)
+			{
+				scrollSpeed = 16;
+			}
+			else if (score <= 80000)
+			{
+				scrollSpeed = 14;
+			}
+			else if (score <= 90000)
+			{
+				scrollSpeed = 12;
+			}
+			else if (score <= 100000)
+			{
+				scrollSpeed = 10;
+			}
+			else if (score >= 100000)
+			{
+				scrollSpeed = 0;
+			}
+
 			// 当たり判定の描画
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 0);
 
@@ -250,10 +323,14 @@ int APIENTRY WinMain(
 				scene = OVER;
 				timer = 0;
 				PlaySoundMem(overSE, DX_PLAYTYPE_BACK);
+
+				ChangeVolumeSoundMem(0, bgm);
 			}
 			break;
 
 		case(OVER): // ゲームオーバー画面の処理
+
+			// ゲームオーバーテキスト表示
 			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3 - 80, "ゲームオーバー", 0xff0000, 80);
 
 			// スコア別ランク付け
@@ -282,7 +359,6 @@ int APIENTRY WinMain(
 				DrawTextA(WIDTH * 0.5 + 250, HEIGHT / 2 - 120, "スコア：%d　一望無限級", score, 0x000000, 30);
 			}
 
-
 			DrawTextC(WIDTH * 0.5, HEIGHT / 2, "Tキーでタイトルに戻る", 0xffffff, 30);
 			DrawTextC(WIDTH * 0.5, HEIGHT / 2 + 45, "Rキーでもう一度やり直す", 0xffffff, 30);
 
@@ -296,8 +372,9 @@ int APIENTRY WinMain(
 			{
 				scene = TITLE;
 				PlaySoundMem(backSE, DX_PLAYTYPE_BACK);
+				StopSoundMem(bgm); //BGM再生停止
 			}
-			// Rキーが押されたらゲームシーンへ遷移する
+			// Rキーが押されたら再びゲームシーンへ遷移する
 			else if (CheckHitKey(KEY_INPUT_R) == 1)
 			{
 				// ここで値を初期化
@@ -308,12 +385,13 @@ int APIENTRY WinMain(
 				score = 0;
 				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
 				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
+				ChangeVolumeSoundMem(255, bgm);
 			}
 			break;
 		}
 
 		ScreenFlip(); // 裏画面の内容を表画面に反映させる
-		WaitTimer(25); // 一定時間待つ
+		WaitTimer(scrollSpeed); // 一定時間待つ 初期値は24
 		if (ProcessMessage() == -1) break; // Windowsから情報を受け取りエラーが起きたら終了
 		if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) break; // ESCキーが押されたら終了
 	}
