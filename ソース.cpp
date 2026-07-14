@@ -176,6 +176,7 @@ int APIENTRY WinMain(
 
 		case(TITLE): // タイトル画面の処理
 
+			scrollSpeed = 24;
 			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3, "Run Game", 0xff6600, 80);
 
 			if (timer % 50 < 25)
@@ -191,6 +192,7 @@ int APIENTRY WinMain(
 				enemyY = 400;
 				setSpeed = 8;
 				score = 0;
+				timer = 0;
 				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
 				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
 
@@ -257,7 +259,7 @@ int APIENTRY WinMain(
 				if (addScore == 0)
 				{
 					score += 100;
-					addScore = 1;
+				 	addScore = 1;
 				}
 				else
 				{
@@ -370,6 +372,7 @@ int APIENTRY WinMain(
 			// Tキーが押されたらタイトルシーンへ遷移する
 			if (CheckHitKey(KEY_INPUT_T) == 1)
 			{
+				timer = 0;
 				scene = TITLE;
 				PlaySoundMem(backSE, DX_PLAYTYPE_BACK);
 				StopSoundMem(bgm); //BGM再生停止
@@ -383,6 +386,7 @@ int APIENTRY WinMain(
 				enemyY = 400;
 				setSpeed = 8;
 				score = 0;
+				timer = 0;
 				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
 				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
 				ChangeVolumeSoundMem(255, bgm);
