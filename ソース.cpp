@@ -37,6 +37,7 @@ int APIENTRY WinMain(
 
 	int score = 0;
 	int HighScore = 101000;
+	int DodgeEnemyScore = 0;
 	int timer = 0;
 	int setSpeed = 8;
 	int scene = TITLE;
@@ -64,6 +65,18 @@ int APIENTRY WinMain(
 		LoadGraphWithCheck("image/enemy01.png"),
 		LoadGraphWithCheck("image/enemy02.png"),
 		LoadGraphWithCheck("image/enemy03.png")
+	};
+
+	int imgEnemy2[3] = {
+	LoadGraphWithCheck("image/enemy04.png"),
+	LoadGraphWithCheck("image/enemy05.png"),
+	LoadGraphWithCheck("image/enemy06.png")
+	};
+
+	int imgEnemy3[3] = {
+	LoadGraphWithCheck("image/enemy07.png"),
+	LoadGraphWithCheck("image/enemy08.png"),
+	LoadGraphWithCheck("image/enemy09.png")
 	};
 
 	// 効果音・BGMを読み込む
@@ -149,7 +162,10 @@ int APIENTRY WinMain(
 			DrawGraph(playerX, playerY, imgPlayer[(timer / 3) % 4], true); // プレイヤの表示
 		}
 
-		// 【仮】時間のカウント、マウス座標など諸々の情報表示。不要になったらコメントアウトする
+		// 【仮】時間のカウント、マウス座標など諸々の情報表示。不要になったら透明化にする
+		/*なぜかこのコードがないとプレイヤーがアニメーションしません。本当になぜ？？わかんねー！*/
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 0);
+
 		int mouseX, mouseY;
 		GetMousePoint(&mouseX, &mouseY);
 		SetFontSize(18);
@@ -165,19 +181,21 @@ int APIENTRY WinMain(
 		SetFontSize(18);
 		DrawFormatString(0, 60, BLACK, "Scene:%d", scene);
 
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
 		// 当たり判定
 		int x1 = playerX + 24, y1 = playerY + 40, r1 = 18, col1 = GetColor(255, 0, 0);
 		int x2 = enemyX + 22, y2 = enemyY + 40, r2 = 28, col2 = GetColor(0, 0, 255);
 		int d = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 
-		// シーン遷移(仮)
+		// シーン遷移
 		switch (scene)
 		{
 
 		case(TITLE): // タイトル画面の処理
 
 			scrollSpeed = 24;
-			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3, "Run Game", 0xff6600, 80);
+			DrawTextC(WIDTH * 0.5, HEIGHT * 0.3, "Dash Dash Iroha", 0xff6600, 80);
 
 			if (timer % 50 < 25)
 			{
@@ -193,6 +211,7 @@ int APIENTRY WinMain(
 				setSpeed = 8;
 				score = 0;
 				timer = 0;
+				DodgeEnemyScore = 0;
 				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
 				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
 
@@ -217,6 +236,9 @@ int APIENTRY WinMain(
 			{
 				DrawTextB(747, 60, "ハイスコア：%d", HighScore, 0xffffff, 30);
 			}
+
+			// 避けた敵の数を表示
+			DrawTextB(820, 620, "避けた敵の数：%d体", DodgeEnemyScore, 0xffffff, 25);
 
 			// ジャンプの処理
 			if (CheckHitKey(KEY_INPUT_SPACE) == 1 && !jump)
@@ -245,6 +267,7 @@ int APIENTRY WinMain(
 			{
 				setSpeed = GetRand(27) + 8;
 				enemyX = 980;
+				DodgeEnemyScore++;
 
 				if (setSpeed >= 28)
 				{
@@ -361,6 +384,7 @@ int APIENTRY WinMain(
 				DrawTextA(WIDTH * 0.5 + 250, HEIGHT / 2 - 120, "スコア：%d　一望無限級", score, 0x000000, 30);
 			}
 
+			DrawTextA(WIDTH * 0.5, HEIGHT / 2 - 80, "避けた敵の数：%d体", DodgeEnemyScore, 0x000000, 25);
 			DrawTextC(WIDTH * 0.5, HEIGHT / 2, "Tキーでタイトルに戻る", 0xffffff, 30);
 			DrawTextC(WIDTH * 0.5, HEIGHT / 2 + 45, "Rキーでもう一度やり直す", 0xffffff, 30);
 
@@ -377,6 +401,7 @@ int APIENTRY WinMain(
 				PlaySoundMem(backSE, DX_PLAYTYPE_BACK);
 				StopSoundMem(bgm); //BGM再生停止
 			}
+
 			// Rキーが押されたら再びゲームシーンへ遷移する
 			else if (CheckHitKey(KEY_INPUT_R) == 1)
 			{
@@ -387,6 +412,7 @@ int APIENTRY WinMain(
 				setSpeed = 8;
 				score = 0;
 				timer = 0;
+				DodgeEnemyScore = 0;
 				PlaySoundMem(decideSE, DX_PLAYTYPE_BACK);
 				PlaySoundMem(runSE, DX_PLAYTYPE_BACK);
 				ChangeVolumeSoundMem(255, bgm);
